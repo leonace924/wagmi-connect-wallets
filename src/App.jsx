@@ -11,6 +11,7 @@ function App() {
   const { address: account } = useAccount();
   const { connectors, connectAsync } = useConnect();
   const { disconnect } = useDisconnect();
+  console.log(connectors)
 
   const listWallet = [
     {
@@ -29,8 +30,8 @@ function App() {
       name: "OKX Wallet",
       icon: "arcticons:okx",
       desc: "Connect with OKX Wallet",
-      connector: connectors.find((c) => c.id.includes("okx")),
-      disabled: !!window["okxwallet"],
+      connector: connectors.find((c) => c.id.includes("okex.wallet")),
+      // disabled: !!window["okxwallet"],
     },
     // {
     //   name: "Binance Wallet",
