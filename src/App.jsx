@@ -1,35 +1,109 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Button } from "./components/ui/Button";
+import { Dropdown } from "./components/ui/Dropdown";
+import { Grid, Item } from "./components/ui/Grid";
+import { Corner } from "./components/ui/Corner";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { Icon } from "@iconify/react";
+import { truncateWalletAddress } from "./utils/wallet";
+import "./App.scss";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { address: account } = useAccount();
+  const { connectors, connectAsync } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const listWallet = [
+    {
+      name: "Metamask",
+      icon: "arcticons:metamask",
+      desc: "Connect to your Metamask",
+      connector: connectors.find((c) => c.type.includes("injected")),
+    },
+    {
+      name: "WalletConnect",
+      icon: "simple-icons:walletconnect",
+      desc: "Connect to your WalletConnect",
+      connector: connectors.find((c) => c.type.includes("walletConnect")),
+    },
+    {
+      name: "OKX Wallet",
+      icon: "arcticons:okx",
+      desc: "Connect with OKX Wallet",
+      connector: connectors.find((c) => c.id.includes("okx")),
+      disabled: !!window["okxwallet"],
+    },
+    // {
+    //   name: "Binance Wallet",
+    //   icon: "simple-icons:binance",
+    //   desc: "Connect with Binance Chain Wallet",
+    //   disabled: true
+    // },
+    {
+      name: "Coinbase Wallet",
+      icon: "tabler:brand-coinbase",
+      desc: "Connect with Coinbase",
+      connector: connectors.find((c) => c.type.includes("coinbase")),
+    },
+  ];
+
+  const handleDisconnect = () => {
+    disconnect();
+  };
+
+  const ButtonPanel = () => {
+    if (account) {
+      return (
+        <Dropdown
+          opener={
+            <Button icon="logos:metamask-icon">
+              {truncateWalletAddress(account)}
+            </Button>
+          }
+        >
+          <Button icon="carbon:wallet" onClick={handleDisconnect}>
+            Disconnect your wallet
+          </Button>
+        </Dropdown>
+      );
+    } else {
+      return <Button icon="carbon:wallet">Connect your wallet</Button>;
+    }
+  };
+
+  const WagmiWallet = ({ name, icon, desc, disabled, connector }) => {
+    const handleConnect = async () => {
+      if (!connector) return;
+
+      await connectAsync({ connector });
+    };
+
+    return (
+      <div
+        className="wallet"
+        onClick={!disabled ? () => handleConnect() : undefined}
+        data-disabled={disabled}
+      >
+        <Icon icon={icon} />
+        <h6>{name}</h6>
+        <p>{desc}</p>
+        <Corner />
+        <Corner color="primary" className="corner-hover" />
+      </div>
+    );
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <ButtonPanel />
+      <Grid className="grid-wallet">
+        {listWallet.map((wallet, id) => (
+          <Item key={id}>
+            <WagmiWallet {...wallet} />
+          </Item>
+        ))}
+      </Grid>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
